@@ -1,307 +1,335 @@
-# NL2SQL Pipeline - Production Ready
+# Professional NL2SQL Pipeline
 
-A robust Natural Language to SQL pipeline specifically designed for Snowflake data warehouses, with intelligent fallback strategies for corporate environments.
+Enterprise-grade Natural Language to SQL conversion system with statistical confidence calculation, professional logging, and robust configuration management.
 
-## 🚀 Key Features
+## Overview
 
-- **Multi-Strategy Architecture**: LLM-based generation with offline pattern matching fallback
-- **Corporate Network Friendly**: Works even with SSL certificate issues and firewall restrictions
-- **BIU Utilities Integration**: Uses your existing `biuutilities.py` for secure Snowflake connections
-- **Cost Optimized**: No vector database required - simplified architecture for better ROI
-- **Enterprise Security**: Built on your existing governance and security framework
-- **Comprehensive Fallback**: Graceful degradation when external APIs are unavailable
+This production-ready NL2SQL pipeline converts natural language queries into SQL statements for Snowflake data warehouses. It features intelligent fallback strategies, statistical confidence calculation, and comprehensive logging for enterprise environments.
 
-## 📊 Architecture Decision
+## Key Features
 
-**We've eliminated vector database dependency based on analysis:**
+- **Statistical Confidence Calculation**: Data-driven confidence scores based on pattern usage, match quality, and execution success
+- **Professional Logging**: Timestamped log files with centralized logging across all components
+- **Configuration Management**: JSON-based configuration with environment variable overrides
+- **Multi-Strategy Processing**: LLM generation with pattern matching fallback
+- **Enterprise Security**: Built on existing BIU utilities framework
+- **Robust Error Handling**: Graceful degradation with detailed error reporting
 
-### Why No Vector Database?
-1. **Limited Schema Size**: Only 2 main tables (dm_risk_master, dm_sales_disb) with ~50 total columns
-2. **Cost Efficiency**: Avoids additional infrastructure and data movement costs
-3. **Simplicity**: Reduces complexity and maintenance overhead
-4. **Sufficient Performance**: Direct schema injection works excellently for this scale
+## Architecture
 
-### Performance Impact Analysis:
-- **Without Vector DB**: 100% schema coverage, 0 additional cost, <3s query time
-- **With Vector DB**: ~5% accuracy improvement, $200+/month cost, additional complexity
-- **ROI**: Not justified for current schema size
+```
+├── main.py                          # Main execution script
+├── core/
+│   ├── nl2sql_pipeline.py          # Core pipeline logic
+│   └── pattern_matcher.py          # Advanced pattern matching
+├── utils/
+│   └── logger.py                   # Centralized logging
+├── config/
+│   ├── pipeline_config.py          # Configuration management
+│   └── pipeline_config.json        # Default configuration
+├── data/                           # Pattern statistics (auto-generated)
+└── logs/                          # Log files (auto-generated)
+```
 
-**Recommendation**: Start without vector DB. Can be added later if you scale to 50+ tables.
+## Installation
 
-## 📋 Prerequisites
-
-- Python 3.8+
-- `biuutilities.py` in your project directory
-- OpenAI API key OR Anthropic API key (optional - works offline without them)
-- Access to UNO_DS schema via BIU utilities (optional - has fallback mode)
-
-## 🛠️ Installation
-
-1. **Ensure BIU utilities are available**:
-   ```bash
-   # Make sure biuutilities.py is in your project directory
-   ls biuutilities.py
-   ```
-
-2. **Install dependencies**:
-   ```bash
+1. **Ensure dependencies are available**:
+   ```cmd
    pip install -r requirements.txt
    ```
 
-3. **Set up environment variables** (optional):
-   ```bash
-   cp .env.template .env
-   # Edit .env with your LLM API keys (optional)
+2. **Verify BIU utilities**:
+   ```cmd
+   # Ensure biuutilities.py is in the project directory
+   dir biuutilities.py
    ```
 
-## 🔧 Configuration
+3. **Optional: Configure LLM APIs**:
+   ```cmd
+   # Set environment variables for LLM access
+   set OPENAI_API_KEY=your_key_here
+   # OR
+   set ANTHROPIC_API_KEY=your_key_here
+   ```
 
-### Optional Environment Variables
+## Usage
 
-```bash
-# LLM API (optional - works offline without them)
-OPENAI_API_KEY=sk-your_openai_api_key_here
-# OR
-ANTHROPIC_API_KEY=sk-ant-your_anthropic_api_key_here
+### 🚀 Quick Start Guide
+
+#### 1. System Status Check (Recommended First Step)
+```cmd
+python main.py --status
+```
+This will show you:
+- LLM availability
+- Snowflake connectivity
+- Pattern statistics
+- Configuration settings
+- Log file location
+
+#### 2. Single Query Execution
+```cmd
+python main.py --query "How many active loans do we have?"
 ```
 
-### BIU Utilities Configuration
+#### 3. Interactive Mode
+```cmd
+python main.py
+```
+Enter queries one by one. Type 'quit' to exit.
 
-The pipeline uses your existing BIU utilities configuration:
-- **Environment**: `prod`
-- **Role**: `PROD_BIU_READ_ONLY_NS`
-- **Query Tag**: `{"team": "DV", "job": "nl2sql_pipeline", "owner": "80020786"}`
-- **Schema**: `UNO_DS`
-
-## 🧪 Testing
-
-Run the comprehensive test suite:
-
-```bash
-python test_pipeline.py
+#### 4. Batch Processing
+```cmd
+python main.py --batch sample_queries.txt
 ```
 
-This will test:
-- ✅ BIU utilities availability
-- ❄️ Snowflake connector functionality
-- 🤖 LLM client capabilities (if API keys available)
-- 🚀 End-to-end pipeline with fallback strategies
-
-## 📖 Usage
-
-### Basic Usage
-
-```python
-import asyncio
-from nl2sql_pipeline import query_to_sql
-
-async def main():
-    # Simple natural language query
-    result = await query_to_sql("How many active loans do we have?")
-    
-    if result.success:
-        print(f"Method: {result.method}")  # 'llm' or 'pattern_matching'
-        print(f"Generated SQL: {result.generated_sql}")
-        print(f"Confidence: {result.confidence_score:.2f}")
-        if result.query_result:
-            print(f"Results: {result.query_result.row_count} rows")
-    else:
-        print(f"Error: {result.matched_pattern}")
-
-asyncio.run(main())
+#### 5. Offline Mode (Pattern Matching Only)
+```cmd
+python main.py --offline --query "Show me high risk loans"
 ```
 
-### Advanced Usage
-
-```python
-from nl2sql_pipeline import nl2sql_pipeline
-
-# Check system status
-status = nl2sql_pipeline.get_status()
-print(f"LLM Available: {status['llm_available']}")
-print(f"Snowflake Available: {status['snowflake_available']}")
-
-# Force offline mode (useful in corporate environments)
-result = await query_to_sql("Show me high risk loans", force_offline=True)
+#### 6. Help
+```cmd
+python main.py --help
 ```
 
-### Demo Mode
+## Configuration
 
-Run the built-in demo:
+### Environment Variables
+- `DB_ENVIRONMENT`: Database environment (default: "prod")
+- `DB_ROLE`: Database role (default: "PROD_BIU_READ_ONLY_NS")
+- `DB_SCHEMA`: Database schema (default: "UNO_DS")
+- `LLM_BASE_CONFIDENCE`: Base confidence for LLM results (default: 0.8)
+- `LOG_LEVEL`: Logging level (default: "INFO")
 
-```bash
-python nl2sql_pipeline.py
+### Configuration File
+Edit `config/pipeline_config.json` to customize:
+- Database connection parameters
+- LLM confidence calculation weights
+- Pattern matching thresholds
+- Logging configuration
+
+## Confidence Calculation
+
+### Pattern Matching Confidence (Statistical)
+```
+confidence = (match_quality × 0.5) + (usage_frequency × 0.3) + ((1 - complexity) × 0.2)
+```
+Calculated using statistical analysis:
+- **Match Quality** (50%): Regex strength + keyword overlap
+- **Usage Frequency** (30%): Historical success rate + usage count
+- **Pattern Complexity** (20%): Inverse of pattern complexity
+
+### LLM Confidence (Dynamic)
+```
+confidence = base_confidence + success_bonus - failure_penalty + speed_bonus
+```
+Dynamic calculation based on:
+- **Base Confidence**: 0.8 (configurable)
+- **Success Bonus**: +0.1 if SQL executes successfully
+- **Failure Penalty**: -0.3 if SQL execution fails
+- **Speed Bonus**: +0.1 if response time < 2 seconds
+
+## Supported Query Patterns
+
+1. **Active loan count**: "How many active loans do we have?"
+2. **Total disbursement**: "What is the total disbursement amount?"
+3. **High risk loans**: "Show me loans with high risk"
+4. **DPD analysis**: "Find loans with DPD greater than 90 days"
+5. **Bounce rate**: "What is the bounce rate by product line?"
+6. **Branch analysis**: "Show disbursements by branch"
+7. **CIBIL analysis**: "What is the average CIBIL score by state?"
+8. **High-value disbursements**: "Show recent disbursements above 10 lakhs"
+9. **Geographic analysis**: "How many loans are there in Mumbai?"
+10. **Low CIBIL loans**: "Show me loans with low CIBIL scores"
+
+## Logging
+
+All operations are logged to timestamped files in the `logs/` directory:
+- **File Format**: `nl2sql_pipeline_YYYYMMDD_HHMMSS.log`
+- **Log Levels**: INFO, WARNING, ERROR, DEBUG
+- **Content**: Query processing, confidence calculations, execution times, errors
+
+### Sample Log Entry
+```
+2025-05-30 09:45:23,123 - nl2sql_pipeline - INFO - Processing query: 'How many active loans do we have?' (force_offline=False)
+2025-05-30 09:45:23,145 - nl2sql_pipeline - INFO - Pattern matched: active_loan_count (confidence: 0.756)
+2025-05-30 09:45:23,167 - nl2sql_pipeline - INFO - SQL execution successful in 0.022s
+2025-05-30 09:45:23,168 - nl2sql_pipeline - INFO - Pattern matching successful in 0.045s
 ```
 
-Or for standalone demo (no dependencies):
+## Data Files
 
-```bash
-python standalone_nl2sql_demo.py
+### Pattern Statistics (`data/pattern_stats.json`)
+Automatically maintained statistics for each pattern:
+```json
+{
+  "active_loan_count": {
+    "total_matches": 15,
+    "successful_executions": 14,
+    "failed_executions": 1,
+    "avg_execution_time": 0.123,
+    "last_used": "1717056789"
+  }
+}
 ```
 
-## 🏗️ Architecture
-
-### Core Components
-
-1. **nl2sql_pipeline.py**: Main pipeline with multi-strategy processing
-2. **llm_client.py**: Unified client for OpenAI and Anthropic APIs with fallback
-3. **snowflake_connector.py**: BIU utilities integration with enhanced schema
-4. **standalone_nl2sql_demo.py**: Completely offline demo for corporate environments
-5. **biuutilities.py**: Your existing enterprise utilities (required)
-
-### Multi-Strategy Data Flow
-
-```
-Natural Language Query
-         ↓
-   Strategy 1: LLM Generation
-   (OpenAI/Anthropic with fallback)
-         ↓ (if fails)
-   Strategy 2: Pattern Matching
-   (10 predefined business patterns)
-         ↓ (if fails)
-   Strategy 3: Graceful Error
-   (Helpful error messages)
+### Pattern Configuration (`config/patterns.json`)
+Auto-generated from defaults, can be customized:
+```json
+[
+  {
+    "id": "active_loan_count",
+    "pattern": "how\\s+many.*active.*loan",
+    "sql": "SELECT COUNT(*) as active_loans FROM {schema}.DM_RISK_MASTER WHERE ACTIVE_LAN = 1",
+    "description": "Count of active loans",
+    "keywords": ["count", "active", "loan"],
+    "complexity": 1,
+    "category": "aggregation"
+  }
+]
 ```
 
-## 📊 Enhanced Schema Information
+## Performance Metrics
 
-### dm_risk_master (25+ key columns)
-Risk management table with comprehensive loan metrics:
-- **FIN_REFERENCE**: Primary Key - Financial reference number
-- **AUM**: Asset under management (loan amount in crores)
-- **DPD**: Days past due (payment overdue days)
-- **P30/P45/P60/P90/P180**: Delinquency buckets for risk analysis
-- **ACTIVE_LAN**: Active loan indicator
-- **CIBIL_SCORE**: Credit score (300-900 range)
-- **VENTILE**: Risk score (1-20, higher = better customer)
-- **EVER30/EVER90**: Historical delinquency flags
-- **BRANCH_NAME/STATE**: Geographic information
+- **Query Generation**: < 3 seconds (LLM), < 0.1 seconds (patterns)
+- **Confidence Accuracy**: Statistical calculation based on historical data
+- **Pattern Success Rate**: Tracked per pattern with automatic updates
+- **Execution Time**: Logged for performance monitoring
 
-### dm_sales_disb (17+ key columns)
-Sales disbursement table with loan transaction details:
-- **FIN_REFERENCE**: Loan account number
-- **DISB_AMOUNT**: Disbursement amount
-- **DISB_DATE**: Disbursement date
-- **SCORE_VENTILE**: Risk score at disbursement
-- **DISB_ROI**: Interest rate
-- **SECURITIZATION_TYPE**: DA/PTC classification
-- **INVESTOR_NAME**: Securitization investor
+## Error Handling
 
-## 🔍 Supported Query Types
+### Graceful Degradation
+1. **LLM Unavailable**: Falls back to pattern matching
+2. **Snowflake Unavailable**: Uses mock results for testing
+3. **Pattern Not Found**: Returns helpful error message
+4. **Configuration Error**: Uses sensible defaults
 
-### LLM-Based Generation (when available)
-- Any natural language query about your data
-- Leverages schema context and few-shot examples
-- High accuracy for complex queries
+### Error Logging
+All errors are logged with:
+- Timestamp and severity level
+- Detailed error description
+- Context information (query, method attempted)
+- Suggested resolution steps
 
-### Pattern-Based Fallback (always available)
-1. **Count of active loans**: "How many active loans do we have?"
-2. **Total disbursement amount**: "What is the total disbursement amount?"
-3. **High risk loans (P90 bucket)**: "Show me loans with high risk"
-4. **Loans with DPD > 90 days**: "Find loans with DPD greater than 90 days"
-5. **Bounce rate by product line**: "What is the bounce rate by product line?"
-6. **Disbursements by branch**: "Show disbursements by branch"
-7. **Average CIBIL score by state**: "What is the average CIBIL score by state?"
-8. **Recent disbursements above 10 lakhs**: "Show recent disbursements above 10 lakhs"
-9. **Loans in Mumbai/Maharashtra**: "How many loans are there in Mumbai?"
-10. **Low CIBIL score loans**: "Show me loans with low CIBIL scores"
+## Security Features
 
-## 🛡️ Enterprise Security Features
-
-- **BIU Utilities Integration**: Leverages your existing security framework
-- **Query Tagging**: All queries tagged for governance and monitoring
+- **BIU Utilities Integration**: Leverages existing security framework
 - **Read-Only Access**: Uses `PROD_BIU_READ_ONLY_NS` role
 - **Query Limits**: Automatic LIMIT clauses for safety
-- **Dangerous Operation Blocking**: Prevents DROP, DELETE, UPDATE operations
-- **Schema Validation**: Ensures queries only use available tables/columns
+- **Input Validation**: Prevents dangerous SQL operations
+- **Audit Trail**: Complete logging for compliance
 
-## 📈 Performance Optimizations
+## Development
 
-- **Multi-Strategy Fallback**: Always works, even without external APIs
-- **Schema Caching**: Loads schema once, reuses for multiple queries
-- **Intelligent Routing**: Uses best available method automatically
-- **Cost Optimization**: No vector database = $0 additional infrastructure cost
+### Adding New Patterns
+1. Edit `config/patterns.json`
+2. Add pattern with regex, SQL template, and metadata
+3. Restart application to load new patterns
+4. Statistics will be automatically tracked
 
-Current performance targets:
-- **Query Generation**: < 3 seconds
-- **Pattern Matching**: < 0.1 seconds
-- **Confidence Score**: 0.8+ for LLM queries, 0.9+ for pattern matches
-- **Accuracy**: 85%+ for LLM, 95%+ for pattern matches
+### Customizing Confidence Calculation
+1. Edit `config/pipeline_config.json`
+2. Adjust weights in the `llm` and `patterns` sections
+3. Changes take effect immediately
 
-## 🚨 Troubleshooting
+### Extending Functionality
+- Add new methods to `ProfessionalNL2SQLPipeline` class
+- Implement additional confidence calculation strategies
+- Add new pattern categories and complexity factors
+
+## Troubleshooting
 
 ### Common Issues
 
-1. **"SSL Certificate verification failed"**
-   - This is a corporate network issue with SSL inspection
-   - **Solution**: Use offline mode: `python standalone_nl2sql_demo.py`
-   - **Diagnosis**: Run `python ssl_diagnostic_simple.py`
+1. **Import Errors**
+   - Ensure all files are in correct directories
+   - Check Python path includes project root
+   - Verify `biuutilities.py` is in the root directory
 
-2. **"BIU utilities not available"**
-   - Ensure `biuutilities.py` is in the same directory
-   - Check that all BIU dependencies are installed
+2. **Configuration Errors**
+   - Verify `config/pipeline_config.json` is valid JSON
+   - Check environment variables are set correctly
 
-3. **"No LLM clients initialized"**
-   - This is fine! Pipeline will use pattern matching fallback
-   - To use LLM: Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in .env
+3. **Pattern Matching Fails**
+   - Check pattern regex syntax in `config/patterns.json`
+   - Verify schema placeholders are correct
+   - Test with known working queries from `sample_queries.txt`
 
-4. **"Failed to connect to Snowflake"**
-   - Pipeline will use fallback mode for testing
-   - Check BIU utilities configuration for production use
+4. **Logging Issues**
+   - Ensure `logs/` directory is writable
+   - Check disk space availability
+   - Check file permissions
 
-## 🔮 Corporate Environment Solutions
-
-### For SSL Certificate Issues:
-1. **Use Standalone Demo**: `python standalone_nl2sql_demo.py`
-2. **Contact IT**: Request whitelisting for `api.anthropic.com`, `api.openai.com`
-3. **Network Alternatives**: Try mobile hotspot or home network
-
-### For Firewall Restrictions:
-- ✅ **Offline Mode**: Works completely without external APIs
-- ✅ **Pattern Matching**: 10 predefined business query patterns
-- ✅ **Mock Results**: Demonstrates functionality without Snowflake
-
-## 💰 Cost Analysis
-
-### Current Architecture Cost:
-- **LLM API**: ~$0.01-0.05 per query (only when used)
-- **Snowflake**: Uses existing compute (no additional cost)
-- **Infrastructure**: $0 (no vector database)
-- **Total**: ~$10-50/month for 1000 LLM queries
-
-### Avoided Costs:
-- **Vector Database**: $200+/month
-- **Data Movement**: $50+/month
-- **Additional Compute**: $100+/month
-- **Total Savings**: $350+/month
-
-## 🤝 Integration Notes
-
-This production-ready version:
-- ✅ **Multi-strategy approach**: Works in any environment
-- ✅ **Corporate-friendly**: No external dependencies required
-- ✅ **Cost-optimized**: Pay only for what you use
-- ✅ **Enterprise-secure**: Built on your existing infrastructure
-- ✅ **Highly available**: Multiple fallback strategies
-
-## 📁 File Structure
-
+### Debug Mode
+```cmd
+set LOG_LEVEL=DEBUG
+python main.py --query "your query"
 ```
-├── nl2sql_pipeline.py              # Main pipeline (production-ready)
-├── llm_client.py                   # LLM client with fallback logic
-├── snowflake_connector.py          # BIU utilities integration
-├── standalone_nl2sql_demo.py       # Offline demo (no dependencies)
-├── test_pipeline.py                # Comprehensive test suite
-├── ssl_diagnostic_simple.py        # SSL troubleshooting tool
-├── requirements.txt                # Python dependencies
-├── .env.template                   # Environment configuration template
-├── biuutilities.py                 # Your existing BIU utilities
-└── README.md                       # This file
-```
+
+### If You Get Specific Errors
+- **SSL Certificate Issues**: Use offline mode or check corporate network settings
+- **Snowflake Connection**: Verify BIU utilities configuration
+- **LLM API Issues**: System automatically falls back to patterns
+
+## Production Deployment
+
+### Recommended Steps
+1. **Test Configuration**: Run `python main.py --status`
+2. **Validate Patterns**: Test with sample queries
+3. **Monitor Logs**: Set up log monitoring
+4. **Performance Baseline**: Establish performance metrics
+5. **Backup Configuration**: Save working configuration
+
+### Monitoring
+- Monitor log files for errors and performance
+- Track pattern success rates over time
+- Review confidence score distributions
+- Monitor query execution times
+
+## Key Improvements Made
+
+### 1. Removed Hardcoded Values
+- Statistical confidence calculation
+- Configuration-driven parameters
+- Data-driven pattern scoring
+
+### 2. Professional Logging
+- Timestamped log files in `logs/` directory
+- No emojis in logs
+- Centralized logging across all components
+- Log levels: INFO, WARNING, ERROR, DEBUG
+
+### 3. Configuration Management
+- JSON configuration file: `config/pipeline_config.json`
+- Environment variable overrides
+- No hardcoded database settings
+
+### 4. Robust Architecture
+- Modular design with clear separation of concerns
+- Statistical pattern matching
+- Professional error handling
+- Enterprise-grade security
+
+## Support
+
+For issues or questions:
+1. Check log files in `logs/` directory
+2. Run system diagnostics: `python main.py --status`
+3. Review configuration in `config/pipeline_config.json`
+4. Test with known working patterns from `sample_queries.txt`
+
+## 🚀 Ready for Production
+
+The system is now:
+- ✅ **Professional**: No hardcoded values, proper logging
+- ✅ **Robust**: Statistical confidence, error handling
+- ✅ **Configurable**: JSON configuration, environment variables
+- ✅ **Maintainable**: Clean architecture, modular design
+- ✅ **Enterprise-ready**: Security, governance, audit trails
+
+**Start with**: `python main.py --status` to verify everything is working!
 
 ---
 
-**Built with 🏢 enterprise reliability and 💰 cost optimization in mind.**
-
-**Ready for immediate deployment in corporate environments with intelligent fallback strategies.**
+**Built for enterprise reliability with professional logging, statistical confidence calculation, and robust error handling.**
